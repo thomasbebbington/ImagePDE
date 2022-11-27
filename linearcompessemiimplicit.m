@@ -50,7 +50,7 @@ for count = 1:100
 
     %uncompressed = uncompressed.*256;
 
-    imwrite(uncompressed,strcat("images/",string(count),".bmp"));
+    imwrite(uncompressed,strcat(".gitignore/images/",string(count),".bmp"));
 
     disp(count);
 end
