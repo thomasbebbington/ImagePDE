@@ -45,7 +45,7 @@ for count = 1:1000
     end
     uncompressed = cast(uncompressed,'uint8');
 
-    imwrite(uncompressed,strcat(".gitignore/images/",string(count),".bmp"));
+    imwrite(uncompressed,strcat("images/",string(count),".bmp"));
 
     disp(count);
 end

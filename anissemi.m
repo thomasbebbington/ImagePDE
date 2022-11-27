@@ -44,7 +44,7 @@ while count < 200 %&& changeperpixel > 0.001
     uncompressed = uncompressed.*256;
     uncompressed = cast(uncompressed,'uint8');
 
-    imwrite(uncompressed,strcat(".gitignore/images/",string(count),".bmp"));
+    imwrite(uncompressed,strcat("images/",string(count),".bmp"));
     A = generatematrix(u);
     Q = (speye(h*w)-tau*A);
     nu = transpose(Q\transpose(u));
