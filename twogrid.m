@@ -7,9 +7,10 @@ h = size(im,1);
 n = min([w h]);
 gray = gray(1:n,1:n);
 
-compressionratio = 0.25;
+compressionratio = 0.2;
 
 savepixelscount = ceil(n^2 * compressionratio);
+unsavepixelcount = n^2 - savepixelscount;
 
 S = randsample(n^2,savepixelscount);
 U = setdiff(1:n^2,S);
@@ -20,66 +21,50 @@ A = M(1:n^2,1:n^2);
 b = zeros(n^2,1);
 b(S) = gray(S);
 
-%b = -A*b;
-b = -b;
-AA = sparse(n^2,n^2);
-I = speye(n^2,n^2);
-AA(:,S) = I(:,S); 
-AA(:,U) = A(:,U);
+b = -A*b;
+b = b(U);
+AA = A(U,U);
 
-uf = zeros(n^2,1);
-uf(S) = gray(S);
-uf(U) = 200;
+uf = zeros(unsavepixelcount,1);
+v = zeros(n^2,1);
+v(S) = gray(S);
 
 nc = floor((n-1)/2);
 
-SC = [];
+AAC = gallery('poisson',nc);
 
-SMF = false(n,n);
-SMF(S) = true;
-
-for i = 1:nc
-    for j = 1:nc
-        if SMF(2*j,2*i)
-            SC = [SC,sub2ind([nc nc],j,i)];
-        end
-    end
-end
-
-
-AAC = M(1:nc^2,1:nc^2);
-IC = speye(nc^2,nc^2);
-%AAC(:,SC) = IC(:,SC);
-
-%img = AA\transpose(b);
-%img = cgs(AA,transpose(b),1e-6,200);
-%img = cgs(AA,transpose(b),1e-6,200,D);
-
-for iterationcount = 1:10
-    for relaxationcount = 1:1
-        uf = relax(uf,A,b);
+tic
+for iterationcount = 1:5
+    for relaxationcount = 1:2
+        uf = relax(uf,AA,b);
     end
     
-    rf = b - (A*uf);
-    rc = restrict(rf,nc,n);
+    rf = b - (AA*uf);
+
+    v(U) = rf;
+
+    rc = restrict(v,nc,n);
     
     ec = AAC\rc;
     
     ef = prolong(ec,n,nc);
     
-    %uf = uf + ef;
+    %uf = uf + ef(U);
 end
 
 for i = 1:1
-    uf = relax(uf,A,b);
+    uf = relax(uf,AA,b);
 end
+toc
 
-uf = A\b;
+
 
 uncompressed = zeros(n);
 
-uncompressed(U) = uf(U);
+uncompressed(U) = uf;
 uncompressed(S) = gray(S);
+
+disp(norm(double(gray(2:n-1,2:n-1))-uncompressed(2:n-1,2:n-1)));
 
 uncompressed = cast(uncompressed,'uint8');
 imwrite(uncompressed,"linear.bmp");
@@ -96,7 +81,6 @@ function uc = restrict(uf,nc,nf)
                 + 4*UF((2*i),(2*j)));
         end
     end
-
     uc = reshape(UC,[nc^2 1]);
 end
 
@@ -158,8 +142,6 @@ function u = relax(u,A,b)
     L = tril(A,0);
     U = triu(A,1);
 
-    for i = 1:10
-        u = L\(b - U*u);
-        u = (transpose(L))\(b - ((transpose(U)*(-u))));
-    end
+    u = L\(b - U*u);
+    %u = (transpose(L))\(b - ((transpose(U)*(-u))));
 end
