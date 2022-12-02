@@ -17,80 +17,45 @@ nc = floor((n-1)/2);
 S = randsample(n^2,savepixelscount);
 U = setdiff(1:n^2,S);
 
-SC = zeros(nc^2,1);
-SCi = zeros(nc^2,1);
-idx = 1;
-
-for i = 1:savepixelscount
-    column = ceil(S(i)/n);
-    row = (S(i) - ((column-1) * n))+1;
-    if (mod(column,2) == 0 && mod(row,2) == 0)
-        SC(idx) = (((column/2)-1)*nc) + row/2;
-        SCi(idx) = S(i);
-
-        if(SC(idx) == 0)
-            disp("zero found");
-            disp(column);
-            disp(row);
-            disp(S(i));
-            disp(i);
-        end
-
-        idx = idx + 1;
-    end
-end
-
-SC = nonzeros(SC);
-SCi = nonzeros(SCi);
-UC = setdiff(1:nc^2,SC);
-
 M=gallery('poisson',n);
 A = M(1:n^2,1:n^2);
 
 b = zeros(n^2,1);
 b(S) = gray(S);
 
-b = -A*b;
 ob = b;
+
+b = -A*b;
+
 b = b(U);
 AA = A(U,U);
 
 uf = zeros(unsavepixelcount,1);
-uf = uf + 200;
 
 v = zeros(n^2,1);
-v(S) = gray(S);
-
-vc = zeros(nc^2,1);
-vc(SC) = gray(SCi);
 
 AAC = gallery('poisson',nc);
-AAC = AAC(UC,UC);
 
 tic
 for iterationcount = 1:5
-    for relaxationcount = 1:2
+    for relaxationcount = 1:1
         uf = relax(uf,AA,b);
     end
     
-    rf = b - (AA*uf);
-
-    v(U) = rf;
-
-    rc = restrict(v,nc,n);
-
-    rc = rc(UC);
-
-    ec = AAC\rc;
-
-    vc(UC) = rc./4;
-    
-    ef = prolong(vc,n,nc);
-    
-    uf = uf + ef(U);
+%     rf = b - (AA*uf);
+% 
+%     v(U) = rf;
+% 
+%     rc = restrict(v,nc,n);
+% 
+%     ec = AAC\rc;
+%     
+%     ef = prolong(ec,n,nc);
+%     
+%     uf = uf + ef(U);
 end
 
-for i = 1:2
+for i = 1:5
     uf = relax(uf,AA,b);
 end
 toc
@@ -112,9 +77,10 @@ function uc = restrict(uf,nc,nf)
     UC = zeros(nc,nc);
     for i = 1:nc
         for j = 1:nc
-            UC(i,j) = (1/16)*(UF((2*i)-1,(2*j)-1) + UF((2*i)-1,(2*j)+1) + UF((2*i)+1,(2*j)-1) + UF((2*i)+1,(2*j)+1) ...
+            sum = (UF((2*i)-1,(2*j)-1) + UF((2*i)-1,(2*j)+1) + UF((2*i)+1,(2*j)-1) + UF((2*i)+1,(2*j)+1) ...
                 + 2*(UF((2*i),(2*j)-1) + UF((2*i),(2*j)+1) + UF((2*i)-1,(2*j)) + UF((2*i)+1,(2*j))) ...
                 + 4*UF((2*i),(2*j)));
+            UC(i,j) = (1/16)*sum;
         end
     end
     uc = reshape(UC,[nc^2 1]);
@@ -179,5 +145,5 @@ function u = relax(u,A,b)
     U = triu(A,1);
 
     u = L\(b - U*u);
-    %u = (transpose(L))\(b - ((transpose(U)*(-u))));
+    u = (transpose(L))\(b - ((transpose(U)*(u))));
 end

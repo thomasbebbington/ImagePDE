@@ -7,7 +7,7 @@ h = size(im,1);
 n = min([w h]);
 gray = gray(1:n,1:n);
 
-compressionratio = 0.5;
+compressionratio = 0.2;
 
 savepixelscount = ceil(n^2 * compressionratio);
 
