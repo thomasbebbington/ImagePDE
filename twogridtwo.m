@@ -1,4 +1,4 @@
-im = imread("image.bmp");
+im = imread("image.png");
 gray = rgb2gray(im);
 
 w = size(im,2);
@@ -7,7 +7,7 @@ h = size(im,1);
 n = min([w h]);
 gray = gray(1:n,1:n);
 
-compressionratio = 0.2;
+compressionratio = 0.3;
 
 savepixelscount = ceil(n^2 * compressionratio);
 unsavepixelcount = n^2 - savepixelscount;
@@ -35,27 +35,28 @@ uf = zeros(unsavepixelcount,1);
 v = zeros(n^2,1);
 
 AAC = gallery('poisson',nc);
+AAC = ((n^2))*AAC;
 
 tic
-for iterationcount = 1:5
-    for relaxationcount = 1:1
+for iterationcount = 1:4
+    for relaxationcount = 1:2
         uf = relax(uf,AA,b);
     end
     
-%     rf = b - (AA*uf);
-% 
-%     v(U) = rf;
-% 
-%     rc = restrict(v,nc,n);
-% 
-%     ec = AAC\rc;
-%     
-%     ef = prolong(ec,n,nc);
-%     
-%     uf = uf + ef(U);
+    rf = b - (AA*uf);
+
+    v(U) = rf;
+
+    rc = restrict(v,nc,n);
+
+    ec = AAC\rc;
+    
+    ef = prolong(ec,n,nc);
+    
+    uf = uf + ef(U);
 end
 
-for i = 1:5
+for i = 1:2
     uf = relax(uf,AA,b);
 end
 toc

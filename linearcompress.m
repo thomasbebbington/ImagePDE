@@ -1,4 +1,4 @@
-im = imread("image.bmp");
+im = imread("computer.png");
 gray = rgb2gray(im);
 
 w = size(im,2);
@@ -26,7 +26,7 @@ AA = A(U,U);
 
 tic
 img = AA\b;
-%img = cgs(AA,b,1e-6,200);
+%img = pcg(AA,b,1e-6,200);
 %img = cgs(AA,b,1e-6,200,D);
 toc
 
