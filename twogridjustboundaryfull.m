@@ -1,8 +1,7 @@
-nf = 201;
+nf = 101;
 nc = ((nf-1)/2);
 
-AF = gallery("poisson",nf);
-AC = gallery("poisson",nc);
+AF = full(gallery("poisson",nf));
 
 R = generateRestrict(nc,nf);
 P = transpose(R);
@@ -26,9 +25,11 @@ b = reshape(b, [nf^2 1]);
 
 uf = ones(nf^2,1)*128;
 
+AC = R*AF*P;
+
 tic
-for iterationcount = 1:5
-    for relaxationcount = 1:3
+for iterationcount = 1:2
+    for relaxationcount = 1:2
         uf = relax(uf,AF,b);
     end
     
@@ -43,7 +44,7 @@ for iterationcount = 1:5
     uf = uf + ef;
 end
 
-for i = 1:3
+for i = 1:2
     uf = relax(uf,AF,b);
 end
 toc
@@ -60,55 +61,69 @@ function R = generateRestrict(nc,nf)
     vs = zeros(1,nf*nc);
     index = 1;
 
-    R = sparse(nc^2,nf^2);
-    row = zeros(1, 2*nf + 3);
-
-    row(1:3) = [1 2 1];
-    row(nf+1:nf+3) = [2 4 2];
-    row((2*nf + 1):(2*nf + 3)) = [1 2 1];
+    %R = sparse(nc^2,nf^2);
+%     row = zeros(1, 2*nf + 3);
+% 
+%     row(1:3) = [1 2 1];
+%     row(nf+1:nf+3) = [2 4 2];
+%     row((2*nf + 1):(2*nf + 3)) = [1 2 1];
 
     for i = 1:nc
         for j = 1:nc
             is(index) = (i-1)*nc + j;
             js(index) = (2*(i-1)*nf + 2*(j-1) + 1);
-            v(index) = 1;
+            vs(index) = 1;
+            index = index + 1;
 
             is(index) = (i-1)*nc + j;
             js(index) = (2*(i-1)*nf + 2*(j-1) + 2);
-            v(index) = 2;
+            vs(index) = 2;
+            index = index + 1;
 
             is(index) = (i-1)*nc + j;
             js(index) = (2*(i-1)*nf + 2*(j-1) + 3);
-            v(index) = 1;
+            vs(index) = 1;
+            index = index + 1;
 
             is(index) = (i-1)*nc + j;
             js(index) = (2*(i-1)*nf + 2*(j-1) + nf+1);
-            v(index) = 2;
+            vs(index) = 2;
+            index = index + 1;
             
             is(index) = (i-1)*nc + j;
             js(index) = (2*(i-1)*nf + 2*(j-1) + nf+2);
-            v(index) = 4;
+            vs(index) = 4;
+            index = index + 1;
             
             is(index) = (i-1)*nc + j;
             js(index) = (2*(i-1)*nf + 2*(j-1) + nf+3);
-            v(index) = 2;
+            vs(index) = 2;
+            index = index + 1;
 
             is(index) = (i-1)*nc + j;
             js(index) = (2*(i-1)*nf + 2*(j-1) + 2*nf + 1);
-            v(index) = 1;
+            vs(index) = 1;
+            index = index + 1;
             
             is(index) = (i-1)*nc + j;
             js(index) = (2*(i-1)*nf + 2*(j-1) + 2*nf + 2);
-            v(index) = 2;
+            vs(index) = 2;
+            index = index + 1;
             
             is(index) = (i-1)*nc + j;
             js(index) = (2*(i-1)*nf + 2*(j-1) + 2*nf + 3);
-            v(index) = 1;
+            vs(index) = 1;
+            index = index + 1;
 
-            R(((i-1)*nc + j), ((2*(i-1)*nf + 2*(j-1) + 1):(2*(i-1)*nf + 2*(j-1) + 2*nf + 3))) = row;
+            % R(((i-1)*nc + j), ((2*(i-1)*nf + 2*(j-1) + 1):(2*(i-1)*nf + 2*(j-1) + 2*nf + 3))) = row;
         end
     end
+    
+    is = nonzeros(is);
+    js = nonzeros(js);
+    vs = nonzeros(vs);
 
+    R = sparse(is,js,vs,nc^2,nf^2);
     R = (1/16)*R;
 end
 

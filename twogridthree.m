@@ -1,59 +1,83 @@
-nf = 801;
-nc = ((nf-1)/2);
+im = imread("imagesmall.bmp");
+gray = rgb2gray(im);
 
-AF = gallery("poisson",nf);
+w = size(im,2);
+h = size(im,1);
 
-R = generateRestrict(nc,nf);
+n = min([w h]);
+gray = gray(1:n,1:n);
+
+compressionratio = 0.2;
+
+savepixelscount = ceil(n^2 * compressionratio);
+unsavepixelcount = n^2 - savepixelscount;
+
+nc = floor((n-1)/2);
+
+S = randsample(n^2,savepixelscount);
+U = setdiff(1:n^2,S);
+
+M=gallery('poisson',n);
+A = M(1:n^2,1:n^2);
+
+b = zeros(n^2,1);
+b(S) = gray(S);
+
+ob = b;
+
+b = -A*b;
+b(S) = gray(S);
+
+
+AA = speye(n^2,n^2);
+AA(U,U) = A(U,U);
+
+uf = zeros(n^2,1);
+
+R = generateRestrict(nc,n);
 P = transpose(R);
+R = full(R);
+P = full(P);
 
-bFull = ones(nf+2);
-AFull = gallery("poisson",nf+2);
+AAC = R*AA*P;
 
-bFull(1:nf+2,1) = 0;
-bFull(:,nf+2) = 0;
-bFull(1,:) = 0;
-bFull(nf+2,:) = 255;
-
-bFull = reshape(bFull, [(nf+2)^2 1]);
-
-b = -(AFull * bFull);
-
-b = reshape(b, [nf+2 nf+2]);
-b = b(2:nf+1,2:nf+1);
-
-b = reshape(b, [nf^2 1]);
-
-uf = ones(nf^2,1)*128;
-
-AC = R*AF*P;
+AA = full(AA);
+AAC = full(AAC);
+uf = zeros(n^2,1);
+uf(S) = gray(S);
 
 tic
-for iterationcount = 1:2
+for iterationcount = 1:4
     for relaxationcount = 1:2
-        uf = relax(uf,AF,b);
+        uf = relax(uf,AA,b);
     end
     
-    rf = b - (AF*uf);
+    uS = uf(S);
+    
+    rf = b - (AA*uf);
 
+    rS = rf(S);
+    
     rc = R*rf;
 
-    ec = AC\rc;
+    ec = AAC\rc;
     
     ef = P*ec;
     
     uf = uf + ef;
 end
-
-for i = 1:2
-    uf = relax(uf,AF,b);
+for relaxationcount = 1:2
+    uf = relax(uf,AA,b);
 end
 toc
 
-u = reshape(uf,[nf nf]);
+uncompressed = uf;
+uncompressed = reshape(uncompressed,[n n]);
 
-u = cast(u,"uint8");
-
-imshow(u);
+uncompressed = cast(uncompressed,'uint8');
+imwrite(uncompressed,"linear.bmp");
+figure, imshow(gray);
+figure, imshow(uncompressed);
 
 function R = generateRestrict(nc,nf)
     is = zeros(1,nc^2);
@@ -126,6 +150,7 @@ function R = generateRestrict(nc,nf)
     R = sparse(is,js,vs,nc^2,nf^2);
     R = (1/16)*R;
 end
+
 
 function u = relax(u,A,b)
     L = tril(A,0);
