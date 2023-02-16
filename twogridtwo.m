@@ -1,10 +1,12 @@
-im = imread("image.bmp");
+addpath bttc
+im = imread("spongebob.png");
 gray = rgb2gray(im);
 
 w = size(im,2);
 h = size(im,1);
 
 n = min([w h]);
+n = 513;
 gray = gray(1:n,1:n);
 
 compressionratio = 0.1;
@@ -15,6 +17,17 @@ unsavepixelcount = n^2 - savepixelscount;
 nc = floor((n-1)/2);
 
 S = randsample(n^2,savepixelscount);
+
+tri = 60;
+[Vi,Fi]=bttc_m(double(gray),tri);
+ind_bttc = n.*(Vi(:,1)-1)+Vi(:,2);
+
+edge = zeros(n,n);
+edge(ind_bttc) = Vi(:,3);
+figure, imshow(edge);
+
+S = union(ind_bttc,S);
+
 U = setdiff(1:n^2,S);
 
 M=gallery('poisson',n);
@@ -40,9 +53,15 @@ AAC = R*AA*P;
 uf = zeros(n^2,1);
 uf(S) = gray(S);
 
+uncompressed = uf;
+uncompressed = reshape(uncompressed,[n n]);
+uncompressed = uncompressed(2:n-1,2:n-1);
+uncompressed = cast(uncompressed,'uint8');
+figure, imshow(uncompressed);
+
 tic
-for iterationcount = 1:4
-    for relaxationcount = 1:2
+for iterationcount = 1:2
+    for relaxationcount = 1:1
         uf = relax(uf,AA,b);
     end
     
@@ -57,13 +76,22 @@ for iterationcount = 1:4
     ec = AAC\rc;
     
     ef = P*ec;
-    
+
+    ufim = uf;
+    ufim = reshape(ufim,[n n]);
+    ufim = cast(ufim,'uint8');
+    error = ef;
+    error = reshape(error,[n n]);
+    error = cast(error,'uint8');
+    %figure, imshow([ufim error]);
+
     uf = uf + ef;
 end
-for relaxationcount = 1:2
+for relaxationcount = 1:5
     uf = relax(uf,AA,b);
 end
 toc
+disp(size(S)/(n^2));
 
 uncompressed = uf;
 uncompressed = reshape(uncompressed,[n n]);
