@@ -1,4 +1,3 @@
-addpath bttc
 im = imread("spongebob.png");
 gray = rgb2gray(im);
 
@@ -6,10 +5,9 @@ w = size(im,2);
 h = size(im,1);
 
 n = min([w h]);
-%n = 513;
 gray = gray(1:n,1:n);
 
-compressionratio = 0.4;
+compressionratio = 0.1;
 
 savepixelscount = ceil(n^2 * compressionratio);
 unsavepixelcount = n^2 - savepixelscount;
@@ -17,16 +15,6 @@ unsavepixelcount = n^2 - savepixelscount;
 nc = floor((n-1)/2);
 
 S = randsample(n^2,savepixelscount);
-
-% tri = 60;
-% [Vi,Fi]=bttc_m(double(gray),tri);
-% ind_bttc = n.*(Vi(:,1)-1)+Vi(:,2);
-% 
-% edge = zeros(n,n);
-% edge(ind_bttc) = Vi(:,3);
-% figure, imshow(edge);
-
-%S = union(ind_bttc,S);
 
 U = setdiff(1:n^2,S);
 
@@ -39,45 +27,40 @@ b(S) = gray(S);
 ob = b;
 
 b = -A*b;
-b(S) = gray(S);
+b = b(U);
 
-
-AA = speye(n^2,n^2);
-AA(U,U) = A(U,U);
+AA = A(U,U);
 
 R = generateRestrict(nc,n);
+R = R(:,U);
 P = transpose(R);
 
 AAC = R*AA*P;
 
-uf = zeros(n^2,1);
-uf(S) = gray(S);
+uf = zeros(unsavepixelcount,1);
 
-uncompressed = uf;
+uncompressed = zeros(n^2,1);
+uncompressed(U) = uf;
+uncompressed(S) = gray(S);
 uncompressed = reshape(uncompressed,[n n]);
 uncompressed = uncompressed(2:n-1,2:n-1);
 uncompressed = cast(uncompressed,'uint8');
 figure, imshow(uncompressed);
 
 tic
-for iterationcount = 1:1
-    for relaxationcount = 1:1
+for iterationcount = 1:4
+    for relaxationcount = 1:2
         uf = relax(uf,AA,b);
     end
     
-    uS = uf(S);
-    
     rf = b - (AA*uf);
-
-    rS = rf(S);
     
     rc = R*rf;
     
     ec = zeros(nc^2,1);
-    for relaxationcount = 1:1
+    for relaxationcount = 1:3
         ec = relax(ec,AAC,rc);
     end
-    %ec = AAC\rc;
     
     ef = P*ec;
 
@@ -87,14 +70,16 @@ for relaxationcount = 1:2
     uf = relax(uf,AA,b);
 end
 toc
-%disp(size(S)/(n^2));
 
-error = ef;
-    error = reshape(error,[n n]);
-    error = cast(error,'uint8');
-    figure, imshow(error);
+error = zeros(n^2,1);
+error(U) = ef;
+error = reshape(error,[n n]);
+error = cast(error,'uint8');
+figure, imshow(error);
 
-uncompressed = uf;
+uncompressed = zeros(n^2,1);
+uncompressed(U) = uf;
+uncompressed(S) = gray(S);
 uncompressed = reshape(uncompressed,[n n]);
 uncompressed = uncompressed(2:n-1,2:n-1);
 
