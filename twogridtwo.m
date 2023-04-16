@@ -176,8 +176,10 @@ function R = generateRestrict(nc,nf)
 end
 
 function u = relax(u,A,b)
+    tic
     L = tril(A,0);
     U = triu(A,1);
+    toc
 
     u = L\(b - U*u);
     u = (transpose(L))\(b - ((transpose(U)*(u))));

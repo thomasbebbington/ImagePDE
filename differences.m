@@ -1,22 +1,27 @@
-im = imread("image.bmp");
-gray = rgb2gray(im);
+im = imread("peppers_gray.tif");
+%gray = rgb2gray(im);
+gray = im(:,:,1);
 
-fwx = [0 -1 1];
-dxf = abs(conv2(gray,fwx,'valid'));
-dxfim = cast(dxf,'uint8');
-imshow(dxfim);
+Gx = [-1 0 1; -2 0 2; -1 0 1];
+Gy = [1 2 1; 0 0 0; -1 -2 -1];
 
-bwx = [-1 1 0];
-dxb = abs(conv2(gray,bwx,'valid'));
-dxbim = cast(dxb,'uint8');
-figure, imshow(dxbim);
+imx = conv2(gray,Gx,'valid');
+imy = conv2(gray,Gy,'valid');
 
-cx = [-1 0 1];
-dxc = abs(conv2(gray,cx,'valid'));
-dxcim = cast(dxc,'uint8');
-figure, imshow(dxcim);
+J = (imx.^2 + imy.^2).^(1/2);
+J = (255/max(J,[],'all'))*J;
+J = cast(J,'uint8');
 
-fwy = [0; -1; 1];
-dyf = abs(conv2(gray,fwy,'valid'));
-dyfim = cast(dyf,'uint8');
-figure, imshow(dyfim);
+imshow(gray);
+figure, imshow(J);
+
+grayblur = imgaussfilt(gray,1);
+
+imblurx = conv2(grayblur,Gx,'valid');
+imblury = conv2(grayblur,Gy,'valid');
+
+Jblur = (imblurx.^2 + imblury.^2).^(1/2);
+Jblur = (255/max(Jblur,[],'all'))*Jblur;
+Jblur = cast(Jblur,'uint8');
+
+figure, imshow(Jblur);

@@ -1,5 +1,6 @@
-im = imread("spongebob.png");
-gray = rgb2gray(im);
+im = imread("peppers_gray.tif");
+%gray = rgb2gray(im);
+gray = im(:,:,1);
 
 w = size(im,2);
 h = size(im,1);
@@ -7,7 +8,7 @@ h = size(im,1);
 n = min([w h]);
 gray = gray(1:n,1:n);
 
-compressionratio = 0.1;
+compressionratio = 0.05;
 
 savepixelscount = ceil(n^2 * compressionratio);
 unsavepixelcount = n^2 - savepixelscount;
@@ -47,19 +48,25 @@ uncompressed = uncompressed(2:n-1,2:n-1);
 uncompressed = cast(uncompressed,'uint8');
 figure, imshow(uncompressed);
 
+AAL = tril(AA,0);
+AAU = triu(AA,1);
+
+AACL = tril(AAC,0);
+AACU = triu(AAC,1);
+
 tic
-for iterationcount = 1:4
+for iterationcount = 1:6
     for relaxationcount = 1:2
-        uf = relax(uf,AA,b);
+        uf = relax(uf,AAL,AAU,b);
     end
     
     rf = b - (AA*uf);
     
     rc = R*rf;
     
-    ec = zeros(nc^2,1);
+    ec = zeros(nc^2,1); 
     for relaxationcount = 1:3
-        ec = relax(ec,AAC,rc);
+        ec = relax(ec,AACL,AACU,rc);
     end
     
     ef = P*ec;
@@ -67,21 +74,28 @@ for iterationcount = 1:4
     uf = uf + ef;
 end
 for relaxationcount = 1:2
-    uf = relax(uf,AA,b);
+    uf = relax(uf,AAL,AAU,b);
 end
 toc
 
-error = zeros(n^2,1);
-error(U) = ef;
-error = reshape(error,[n n]);
-error = cast(error,'uint8');
-figure, imshow(error);
+tic
+ufcg = cgs(AA,b);
+toc
 
 uncompressed = zeros(n^2,1);
 uncompressed(U) = uf;
 uncompressed(S) = gray(S);
 uncompressed = reshape(uncompressed,[n n]);
 uncompressed = uncompressed(2:n-1,2:n-1);
+
+uncompressedcg = zeros(n^2,1);
+uncompressedcg(U) = ufcg;
+uncompressedcg(S) = gray(S);
+uncompressedcg = reshape(uncompressedcg,[n n]);
+uncompressedcg = uncompressedcg(2:n-1,2:n-1);
+
+uncompressedcg = cast(uncompressedcg,'uint8');
+figure, imshow(uncompressedcg);
 
 uncompressed = cast(uncompressed,'uint8');
 imwrite(uncompressed,"linear.bmp");
@@ -157,15 +171,12 @@ function R = generateRestrict(nc,nf)
     vs = nonzeros(vs);
 
     R = sparse(is,js,vs,nc^2,nf^2);
-    R = (1/16)*R;
+    %R = (1/16)*R;
 end
 
-function u = relax(u,A,b)
-    L = tril(A,0);
-    U = triu(A,1);
-
+function u = relax(u,L,U,b)
     u = L\(b - U*u);
-    u = (transpose(L))\(b - ((transpose(U)*(u))));
+    u = transpose(L)\(b - transpose(U)*u);
 end
 
 function u = relaxj(u,A,b)
