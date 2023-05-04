@@ -1,6 +1,6 @@
-im = imread("peppers_gray.tif");
-%gray = rgb2gray(im);
-gray = im(:,:,1);
+im = imread("image.png");
+gray = rgb2gray(im);
+%gray = im(:,:,1);
 
 w = size(im,2);
 h = size(im,1);
@@ -8,7 +8,7 @@ h = size(im,1);
 n = min([w h]);
 gray = gray(1:n,1:n);
 
-compressionratio = 0.05;
+compressionratio = 0.2;
 
 savepixelscount = ceil(n^2 * compressionratio);
 unsavepixelcount = n^2 - savepixelscount;
@@ -107,14 +107,6 @@ function R = generateRestrict(nc,nf)
     js = zeros(1,nf^2);
     vs = zeros(1,nf*nc);
     index = 1;
-
-    %R = sparse(nc^2,nf^2);
-%     row = zeros(1, 2*nf + 3);
-% 
-%     row(1:3) = [1 2 1];
-%     row(nf+1:nf+3) = [2 4 2];
-%     row((2*nf + 1):(2*nf + 3)) = [1 2 1];
-
     for i = 1:nc
         for j = 1:nc
             is(index) = (i-1)*nc + j;
@@ -161,8 +153,6 @@ function R = generateRestrict(nc,nf)
             js(index) = (2*(i-1)*nf + 2*(j-1) + 2*nf + 3);
             vs(index) = 1;
             index = index + 1;
-
-            % R(((i-1)*nc + j), ((2*(i-1)*nf + 2*(j-1) + 1):(2*(i-1)*nf + 2*(j-1) + 2*nf + 3))) = row;
         end
     end
     
@@ -171,7 +161,6 @@ function R = generateRestrict(nc,nf)
     vs = nonzeros(vs);
 
     R = sparse(is,js,vs,nc^2,nf^2);
-    %R = (1/16)*R;
 end
 
 function u = relax(u,L,U,b)
@@ -179,10 +168,6 @@ function u = relax(u,L,U,b)
     u = transpose(L)\(b - transpose(U)*u);
 end
 
-function u = relaxj(u,A,b)
-    L = tril(A,-1);
-    U = triu(A,1);
-    D = diag(diag(A));
-
+function u = relaxj(u,L,U,D,b)
     u = D\(b-(L+U)*u);
 end

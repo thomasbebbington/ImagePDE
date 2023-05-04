@@ -78,7 +78,7 @@ figure, imshow(uncompressed);
 % figure, imshow(selected);
 
 function A = generatematrix
-        global h w savepixelscount indexes tau;
+    global h w savepixelscount indexes tau;
 
     is = zeros(1,h*w);
     js = zeros(1,h*w);

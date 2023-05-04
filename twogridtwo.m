@@ -9,7 +9,7 @@ n = min([w h]);
 %n = 513;
 gray = gray(1:n,1:n);
 
-compressionratio = 0.4;
+compressionratio = 0.1;
 
 savepixelscount = ceil(n^2 * compressionratio);
 unsavepixelcount = n^2 - savepixelscount;
@@ -52,6 +52,9 @@ AAC = R*AA*P;
 
 uf = zeros(n^2,1);
 uf(S) = gray(S);
+comp = uf;
+comp= cast(comp,'uint8');
+save("compressed","comp");
 
 uncompressed = uf;
 uncompressed = reshape(uncompressed,[n n]);
